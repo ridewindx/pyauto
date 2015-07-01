@@ -6,11 +6,12 @@ import os
 arch = platform.architecture()[0]
 audll = 'AutoItX3_x64.dll' if arch == '64bit' else 'AutoItX3.dll'
 audll = os.path.join(os.path.dirname(__file__), audll)
-au = cdll.LoadLibrary(audll)
+au = windll.LoadLibrary(audll)   # windll, since "#define WINAPI __stdcall"
 
 
 au.AU3_ProcessClose.argtypes = [c_wchar_p]
 au.AU3_ProcessExists.argtypes = [c_wchar_p]
+au.AU3_ProcessSetPriority.argtypes = [c_wchar_p, c_int]
 au.AU3_ProcessWait.argtypes = [c_wchar_p, c_int]
 au.AU3_ProcessWaitClose.argtypes = [c_wchar_p, c_int]
 au.AU3_Run.argtypes = [c_wchar_p, c_wchar_p, c_int]
@@ -20,6 +21,7 @@ au.AU3_INTDEFAULT = -2147483647
 au.AU3_ToolTip.argtypes = [c_wchar_p, c_int, c_int]
 au.AU3_ClipGet.argtypes = [c_wchar_p, c_int]
 au.AU3_ClipPut.argtypes = [c_wchar_p]
+au.AU3_AutoItSetOption.argtypes = [c_wchar_p, c_int]
 au.AU3_MouseClick.argtypes = [c_wchar_p, c_int, c_int, c_int, c_int]
 au.AU3_MouseClickDrag.argtypes = [c_wchar_p, c_int, c_int, c_int, c_int, c_int]
 au.AU3_MouseDown.argtypes = [c_wchar_p]
@@ -63,6 +65,22 @@ def process_exists(process):
     return au.AU3_ProcessExists(unicode(process))
 
 
+def process_set_priority(process, priority):
+    """Changes the priority of a process.
+
+    :param process: The name or PID of the process to check
+    :param priority: 'idle'/'low', 'below_normal', 'normal', 'above_normal', 'high', 'realtime'
+    :return: 1 if success, 0 if failure
+    """
+    priority_mapping = {'idle': 0, 'low': 0,
+                        'below_normal': 1,
+                        'normal': 2,
+                        'above_normal': 3,
+                        'high': 4,
+                        'realtime': 5}  # Use with caution, may make the system unstable
+    return au.AU3_ProcessSetPriority(unicode(process), priority_mapping[priority])
+
+
 def process_wait(process, timeout=0):
     """Pauses script execution until a given process exists.
     Process names are executables without the full path, e.g., "notepad.exe" or "winword.exe".
@@ -73,7 +91,7 @@ def process_wait(process, timeout=0):
     :param timeout: Specifies how long to wait (default 0 is to wait indefinitely)
     :return: 1 if success, 0 if the wait timed out
     """
-    return au.AU3_ProcessWait(process, timeout)
+    return au.AU3_ProcessWait(unicode(process), timeout)
 
 
 def process_wait_close(process, timeout=0):
@@ -85,7 +103,7 @@ def process_wait_close(process, timeout=0):
     :param timeout: Specifies how long to wait (default 0 is to wait indefinitely)
     :return: 1 if success, 0 if the wait timed out
     """
-    return au.AU3_ProcessWaitClose(process, timeout)
+    return au.AU3_ProcessWaitClose(unicode(process), timeout)
 
 
 # The show state of the window:
@@ -107,45 +125,47 @@ SW_MAX = 11
 
 
 def run(filename, workingdir=u'', show_flag=SW_SHOWNORMAL):
-    """
+    """Runs an external program.
+    After running the requested program the script continues.
+    To pause execution of the script until the spawned program has finished use the RunWait function instead.
+
     :param filename: The name of the executable (EXE, BAT, COM, or PIF) to run
     :param workingdir: The working directory
     :param show_flag: The "show" flag of the executed program
     :return: The PID of the process that was launched, or 0 on failure
     """
-    return au.AU3_Run(filename, workingdir, show_flag)
+    return au.AU3_Run(unicode(filename), unicode(workingdir), show_flag)
 
 
 def run_wait(filename, workingdir=u'', show_flag=SW_SHOWNORMAL):
-    """
+    """Runs an external program and pauses script execution until the program finishes.
+    After running the requested program the script pauses until the program terminates.
+    To run a program and then immediately continue script execution use the Run function instead.
+
+    Some programs will appear to return immediately even though they are still running;
+    these programs spawn another process - you may be able to use the ProcessWaitClose function to handle these cases.
+
     :param filename: The name of the executable (EXE, BAT, COM, or PIF) to run
     :param workingdir: The working directory
     :param show_flag: The "show" flag of the executed program
     :return: Returns the exit code of the program that was run
     """
-    return au.AU3_RunWait(filename, workingdir, show_flag)
+    return au.AU3_RunWait(unicode(filename), unicode(workingdir), show_flag)
 
 
-# The shutdown code is a combination of the following values:
-Logoff = 0
-Shutdown = 1
-Reboot = 2
-Force = 4
-Powerdown = 8
-
-
-def shutdown(code):
+def shutdown(codes):
     """Shuts down the system.
-    Add the required values together. To shutdown and power down,
-    for example, the code would be 9 (shutdown + power down = 1 + 8 = 9).
+    Add the required values together.
+    To shutdown and power down, for example, the code would be 9 (shutdown + power down = 1 + 8 = 9).
 
-    :param code: A combination of shutdown codes
+    :param codes: A combination of shutdown codes: 'logoff', 'shutdown', 'reboot', 'force', 'powerdown'
     :return: 1 if success, 0 if failure
     """
-    return au.AU3_Shutdown(code)
+    code_mapping = {'logoff': 0, 'shutdown': 1, 'reboot': 2, 'force': 4, 'powerdown': 8}
+    return au.AU3_Shutdown(sum(map(code_mapping.get, codes)))
 
 
-def tooltip(text, x, y):
+def tooltip(text, x=None, y=None):
     """Creates a tooltip anywhere on the screen.
     If the x and y coordinates are omitted the, tip is placed near the mouse cursor.
     If the coords would cause the tooltip to run off screen, it is repositioned to visible.
@@ -157,7 +177,7 @@ def tooltip(text, x, y):
     :param y: The y position of the tooltip
     :return: None
     """
-    au.AU3_ToolTip(text, x, y)
+    au.AU3_ToolTip(unicode(text), x if x is None else au.AU3_INTDEFAULT, y if y is None else au.AU3_INTDEFAULT)
 
 
 def clip_get(bufsize=4096):
@@ -179,17 +199,17 @@ def clip_put(value):
     :param value: The text to write to the clipboard
     :return: 1 if success, 0 if failure
     """
-    return au.AU3_ClipPut(value)
+    return au.AU3_ClipPut(unicode(value))
 
 
 def set_option(option, value):
-    """Changes the operation of various AutoIt functions/parameters
+    """Changes the operation of various AutoIt functions/parameters.
 
     :param option: The option to change
     :param value: The value of the option setting
     :return: The value of the previous setting
     """
-    return au.AU3_AutoItSetOption(option, value)
+    return au.AU3_AutoItSetOption(unicode(option), value)
 
 
 def set_mouse_click_delay(delay=10):
@@ -234,11 +254,9 @@ def mouse_click(button='', x=None, y=None, clicks=1, speed=10):
     A speed of 0 will move the mouse instantly. Default speed is 10
     :return: None
     """
-    if not x:
-        x = au.AU3_INTDEFAULT
-    if not y:
-        y = au.AU3_INTDEFAULT
-    au.AU3_MouseClick(button, x, y, clicks, speed)
+    au.AU3_MouseClick(unicode(button),
+                      x if x is None else au.AU3_INTDEFAULT, y if y is None else au.AU3_INTDEFAULT,
+                      clicks, speed)
 
 
 def mouse_click_drag(button, x1, y1, x2, y2, speed=10):
@@ -253,7 +271,7 @@ def mouse_click_drag(button, x1, y1, x2, y2, speed=10):
     A speed of 0 will move the mouse instantly. Default speed is 10
     :return: None
     """
-    au.AU3_MouseClickDrag(button, x1, y1, x2, y2, speed)
+    au.AU3_MouseClickDrag(unicode(button), x1, y1, x2, y2, speed)
 
 
 def mouse_down(button=''):
@@ -263,7 +281,7 @@ def mouse_down(button=''):
     :param button: The button to click: "left", "right", "middle", "main", "menu", "primary", "secondary"
     :return: None
     """
-    au.AU3_MouseDown(button)
+    au.AU3_MouseDown(unicode(button))
 
 
 def mouse_up(button=''):
@@ -273,7 +291,7 @@ def mouse_up(button=''):
     :param button: The button to click: "left", "right", "middle", "main", "menu", "primary", "secondary"
     :return: None
     """
-    au.AU3_MouseUp(button)
+    au.AU3_MouseUp(unicode(button))
 
 
 def mouse_move(x, y, speed=10):
@@ -297,7 +315,7 @@ def mouse_wheel(direction, clicks=1):
     :param clicks: The number of times to move the wheel. Default is 1
     :return: None
     """
-    au.AU3_MouseWheel(direction, clicks)
+    au.AU3_MouseWheel(unicode(direction), clicks)
 
 
 class _Point(Structure):
@@ -330,8 +348,8 @@ SIZENWSE = 12
 SIZEWE = 13
 UPARROW = 14
 WAIT = 15
-    
-    
+
+
 def mouse_get_cursor():
     """Returns a cursor ID Number of the current Mouse Cursor.
 
@@ -340,13 +358,17 @@ def mouse_get_cursor():
     return au.AU3_MouseGetCursor()
 
 
+# ------------------------------ Begin send keystrokes ------------------------------
+
+
 def send(keys, flag=0):
     """Sends simulated keystrokes to the active window.
     The "Send" command syntax is similar to that of ScriptIt and the Visual Basic "SendKeys" command.
     Characters are sent as written with the exception of the following characters:
 
     '!'
-    This tells AutoIt to send an ALT keystroke, therefore Send("This is text!a") would send the keys "This is text" and then press "ALT+a".
+    This tells AutoIt to send an ALT keystroke,
+    therefore Send("This is text!a") would send the keys "This is text" and then press "ALT+a".
     N.B. Some programs are very choosy about capital letters and ALT keys, i.e. "!A" is different to "!a".
     The first says ALT+SHIFT+A, the second is ALT+a. If in doubt, use lowercase!
 
@@ -356,12 +378,12 @@ def send(keys, flag=0):
 
     '^'
     This tells AutoIt to send a CONTROL keystroke, therefore Send("^!a") would send "CTRL+ALT+a".
-
     N.B. Some programs are very choosy about capital letters and CTRL keys, i.e. "^A" is different to "^a".
     The first says CTRL+SHIFT+A, the second is CTRL+a. If in doubt, use lowercase!
 
     '#'
-    The hash now sends a Windows keystroke; therefore, Send("#r") would send Win+r which launches the Run dialog box.
+    The hash now sends a Windows keystroke;
+    therefore, Send("#r") would send Win+r which launches the Run dialog box.
 
 
     Send Command (if zero flag)                 Resulting Keypress
@@ -697,6 +719,9 @@ def send_shift_down():
 
 def send_shift_up():
     send(u'{SHIFTUP}')
+
+
+# ------------------------------ End send keystrokes ------------------------------
 
 
 class _Rect(Structure):
