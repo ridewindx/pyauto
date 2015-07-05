@@ -758,3 +758,154 @@ def pixel_get_color(x, y):
     :return: decimal value of pixel's color, or -1 if invalid coordinates
     """
     return au.AU3_PixelGetColor(x, y)
+
+
+au.AU3_WinGetHandle.argtypes = [c_wchar_p, c_wchar_p]
+au.AU3_WinGetHandle.restype = c_void_p
+au.AU3_WinExists.argtypes = [c_wchar_p, c_wchar_p]
+au.AU3_WinExists.restype = c_bool
+au.AU3_WinActive.argtypes = [c_wchar_p, c_wchar_p]
+au.AU3_WinActive.restype = c_bool
+au.AU3_WinActivate.argtypes = [c_wchar_p, c_wchar_p]
+au.AU3_WinClose.argtypes = [c_wchar_p, c_wchar_p]
+au.AU3_WinKill.argtypes = [c_wchar_p, c_wchar_p]
+au.AU3_WinMove.argtypes = [c_wchar_p, c_wchar_p, c_int, c_int, c_int, c_int]
+au.AU3_WinGetText.argtypes = [c_wchar_p, c_wchar_p, c_wchar_p, c_int]
+
+
+def win_get_handle(title, text=u''):
+    """Retrieves the internal handle of a window.
+
+    :param title: the title of the window to read
+    :param text: the text of the window to read (optional)
+    :return: the window handle value, or None if no window matches the criteria
+    """
+    return au.AU3_WinGetHandle(title, text)
+
+
+def win_exists(title, text=u''):
+    """Checks to see if a specified window exists, even if the window is hidden.
+    """
+    return au.AU3_WinExists(title, text)
+
+
+def win_active(title, text=u''):
+    """Checks to see if a specified window exists and is currently active.
+    """
+    return au.AU3_WinActive(title, text)
+
+
+def win_activate(title, text=u''):
+    """Activates (gives focus to) a window.
+    """
+    au.AU3_WinActivate(title, text)
+
+
+def win_close(title, text=u''):
+    """Closes a window.
+
+    This function sends a close message to a window, the result depends on the window (it may ask to save data, etc.).
+    To force a window to close, use the WinKill function.
+    If multiple windows match the criteria, the window that was most recently active is closed.
+    """
+    au.AU3_WinClose(title, text)
+
+
+def win_kill(title, text=u''):
+    """Forces a window to close.
+
+    The difference between this function and WinClose is that WinKill will forcibly terminate the window if it doesn't close quickly enough.
+    Consequently, a user might not have time to respond to dialogs prompting the user to save data.
+    Although WinKill can work on both minimized and hidden windows,
+    some windows (notably explorer windows) can only be terminated using WinClose.
+    """
+    au.AU3_WinKill(title, text)
+
+
+def win_move(title, text=u'', x=0, y=0, width=None, height=None):
+    """Moves and/or resizes a window.
+
+    WinMove has no effect on minimized windows, but WinMove works on hidden windows.
+    If very width and height are small (or negative), the window will go no smaller than 112 x 27 pixels.
+    If width and height are large, the window will go no larger than approximately [12+@DesktopWidth] x [12+@DesktopHeight] pixels.
+    Negative values are allowed for the x and y coordinates.
+    In fact, you can move a window off screen;
+    and if the window's program is one that remembers its last window position,
+    the window will appear in the corner (but fully on-screen) the next time you launch the program.
+    If multiple windows match the criteria, the most recently active window is used.
+
+    :param x: X coordinate to move to
+    :param y: Y coordinate to move to
+    :param width: new width of the window (optional)
+    :param height: new height of the window (optional)
+    """
+    au.AU3_WinMove(title, text, x, y, width or -1, height or -1)
+
+
+def win_get_text(title, text=u'', bufsize=64 * 1024):
+    """Retrieves the text from a window.
+
+    Up to 64KB of window text can be retrieved. WinGetText works on minimized windows,
+    but only works on hidden windows if you've set AutoItSetOption("WinDetectHiddenText", 1)
+    If multiple windows match the criteria for WinGetText, the information for the most recently active match is returned.
+    Use WinGetText("") to get the active window's text.
+    """
+    buf = create_unicode_buffer(bufsize)
+    au.AU3_WinGetText(title, text, buf, bufsize)
+    return buf.value
+
+
+def win_get_title(title, text=u'', bufsize=64 * 1024):
+    """Retrieves the full title from a window.
+
+    WinGetTitle("") returns the active window's title. WinGetTitle works on both minimized and hidden windows.
+    If multiple windows match the criteria, the most recently active window is used.
+    """
+    buf = create_unicode_buffer(bufsize)
+    au.AU3_WinGetTitle(title, text, buf, bufsize)
+    return buf.value
+
+
+def win_get_pos(title=u'Program Manager', text=u''):
+    """
+
+    WinGetPosX returns negative numbers such as -32000 for minimized windows,
+    but works fine with (non-minimized) hidden windows.
+    If the window title "Program Manager" is used, the function will return the size of the desktop.
+    If multiple windows match the criteria, the most recently active window is used.
+
+    :param title:
+    :param text:
+    :return:
+    """
+    rect = _Rect()
+    au.AU3_WinGetPos(title, text, pointer(rect))
+    return rect.left, rect.top, rect.right, rect.bottom
+
+
+def win_get_client_size(title, text=u''):
+    """Retrieves the size of a given window's client area.
+
+    If the window is minimized, the returned width and height values are both zero.
+    However, WinGetClientSize works correctly on (non-minimized) hidden windows.
+    If the window title "Program Manager" is used, the function will return the size of the desktop.
+    WinGetClientSize("") matches the active window.
+    If multiple windows match the criteria, the most recently active window is used.
+
+    :param title:
+    :param text:
+    :return: tuple of width and height
+    """
+    rect = _Rect()
+    au.AU3_WinGetClientSize(title, text, pointer(rect))
+    return rect.right, rect.bottom
+
+
+def win_get_caret_size():
+    """Returns the coordinates of the caret in the foreground window.
+
+    :return:
+    """
+    point = _Point()
+    au.AU3_WinGetCaretPos(pointer(point))
+    return point.x, point.y
