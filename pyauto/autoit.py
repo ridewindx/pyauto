@@ -3,33 +3,33 @@ import platform
 import os
 
 
-arch = platform.architecture()[0]
-audll = 'AutoItX3_x64.dll' if arch == '64bit' else 'AutoItX3.dll'
-audll = os.path.join(os.path.dirname(__file__), audll)
-au = windll.LoadLibrary(audll)   # windll, since "#define WINAPI __stdcall"
+_arch = platform.architecture()[0]
+_audll = 'AutoItX3_x64.dll' if _arch == '64bit' else 'AutoItX3.dll'
+_audll = os.path.join(os.path.dirname(__file__), _audll)
+_audll = windll.LoadLibrary(_audll)   # windll, since "#define WINAPI __stdcall"
 
 
-au.AU3_ProcessClose.argtypes = [c_wchar_p]
-au.AU3_ProcessExists.argtypes = [c_wchar_p]
-au.AU3_ProcessSetPriority.argtypes = [c_wchar_p, c_int]
-au.AU3_ProcessWait.argtypes = [c_wchar_p, c_int]
-au.AU3_ProcessWaitClose.argtypes = [c_wchar_p, c_int]
-au.AU3_Run.argtypes = [c_wchar_p, c_wchar_p, c_int]
-au.AU3_RunWait.argtypes = [c_wchar_p, c_wchar_p, c_int]
-au.AU3_Shutdown.argtypes = [c_int]
-au.AU3_INTDEFAULT = -2147483647
-au.AU3_ToolTip.argtypes = [c_wchar_p, c_int, c_int]
-au.AU3_ClipGet.argtypes = [c_wchar_p, c_int]
-au.AU3_ClipPut.argtypes = [c_wchar_p]
-au.AU3_AutoItSetOption.argtypes = [c_wchar_p, c_int]
-au.AU3_MouseClick.argtypes = [c_wchar_p, c_int, c_int, c_int, c_int]
-au.AU3_MouseClickDrag.argtypes = [c_wchar_p, c_int, c_int, c_int, c_int, c_int]
-au.AU3_MouseDown.argtypes = [c_wchar_p]
-au.AU3_MouseGetPos.argtypes = []
-au.AU3_MouseMove.argtypes = [c_int, c_int, c_int]
-au.AU3_MouseUp.argtypes = [c_wchar_p]
-au.AU3_MouseWheel.argtypes = [c_wchar_p, c_int]
-au.AU3_Send.argtypes = [c_wchar_p, c_int]
+_audll.AU3_ProcessClose.argtypes = [c_wchar_p]
+_audll.AU3_ProcessExists.argtypes = [c_wchar_p]
+_audll.AU3_ProcessSetPriority.argtypes = [c_wchar_p, c_int]
+_audll.AU3_ProcessWait.argtypes = [c_wchar_p, c_int]
+_audll.AU3_ProcessWaitClose.argtypes = [c_wchar_p, c_int]
+_audll.AU3_Run.argtypes = [c_wchar_p, c_wchar_p, c_int]
+_audll.AU3_RunWait.argtypes = [c_wchar_p, c_wchar_p, c_int]
+_audll.AU3_Shutdown.argtypes = [c_int]
+_audll.AU3_INTDEFAULT = -2147483647
+_audll.AU3_ToolTip.argtypes = [c_wchar_p, c_int, c_int]
+_audll.AU3_ClipGet.argtypes = [c_wchar_p, c_int]
+_audll.AU3_ClipPut.argtypes = [c_wchar_p]
+_audll.AU3_AutoItSetOption.argtypes = [c_wchar_p, c_int]
+_audll.AU3_MouseClick.argtypes = [c_wchar_p, c_int, c_int, c_int, c_int]
+_audll.AU3_MouseClickDrag.argtypes = [c_wchar_p, c_int, c_int, c_int, c_int, c_int]
+_audll.AU3_MouseDown.argtypes = [c_wchar_p]
+_audll.AU3_MouseGetPos.argtypes = []
+_audll.AU3_MouseMove.argtypes = [c_int, c_int, c_int]
+_audll.AU3_MouseUp.argtypes = [c_wchar_p]
+_audll.AU3_MouseWheel.argtypes = [c_wchar_p, c_int]
+_audll.AU3_Send.argtypes = [c_wchar_p, c_int]
 
 
 def is_admin():
@@ -38,7 +38,7 @@ def is_admin():
 
     :return: 1 if the current user has administrator privileges, 0 if user lacks admin privileges
     """
-    return au.AU3_IsAdmin()
+    return _audll.AU3_IsAdmin()
 
 
 def process_close(process):
@@ -51,7 +51,7 @@ def process_close(process):
     :param process: The name or PID of the process to terminate, e.g., "notepad.exe" or 3647
     :return: None
     """
-    au.AU3_ProcessClose(unicode(process))
+    _audll.AU3_ProcessClose(unicode(process))
 
 
 def process_exists(process):
@@ -62,7 +62,7 @@ def process_exists(process):
     :param process: The name or PID of the process to check, e.g., "notepad.exe" or 3647
     :return: the PID of the process, or 0 if process does not exist
     """
-    return au.AU3_ProcessExists(unicode(process))
+    return _audll.AU3_ProcessExists(unicode(process))
 
 
 def process_set_priority(process, priority):
@@ -78,7 +78,7 @@ def process_set_priority(process, priority):
                         'above_normal': 3,
                         'high': 4,
                         'realtime': 5}  # Use with caution, may make the system unstable
-    return au.AU3_ProcessSetPriority(unicode(process), priority_mapping[priority])
+    return _audll.AU3_ProcessSetPriority(unicode(process), priority_mapping[priority])
 
 
 def process_wait(process, timeout=0):
@@ -91,7 +91,7 @@ def process_wait(process, timeout=0):
     :param timeout: Specifies how long to wait (default 0 is to wait indefinitely)
     :return: 1 if success, 0 if the wait timed out
     """
-    return au.AU3_ProcessWait(unicode(process), timeout)
+    return _audll.AU3_ProcessWait(unicode(process), timeout)
 
 
 def process_wait_close(process, timeout=0):
@@ -103,7 +103,7 @@ def process_wait_close(process, timeout=0):
     :param timeout: Specifies how long to wait (default 0 is to wait indefinitely)
     :return: 1 if success, 0 if the wait timed out
     """
-    return au.AU3_ProcessWaitClose(unicode(process), timeout)
+    return _audll.AU3_ProcessWaitClose(unicode(process), timeout)
 
 
 # The show state of the window:
@@ -134,7 +134,7 @@ def run(filename, workingdir=u'', show_flag=SW_SHOWNORMAL):
     :param show_flag: The "show" flag of the executed program
     :return: The PID of the process that was launched, or 0 on failure
     """
-    return au.AU3_Run(unicode(filename), unicode(workingdir), show_flag)
+    return _audll.AU3_Run(unicode(filename), unicode(workingdir), show_flag)
 
 
 def run_wait(filename, workingdir=u'', show_flag=SW_SHOWNORMAL):
@@ -150,7 +150,7 @@ def run_wait(filename, workingdir=u'', show_flag=SW_SHOWNORMAL):
     :param show_flag: The "show" flag of the executed program
     :return: Returns the exit code of the program that was run
     """
-    return au.AU3_RunWait(unicode(filename), unicode(workingdir), show_flag)
+    return _audll.AU3_RunWait(unicode(filename), unicode(workingdir), show_flag)
 
 
 def shutdown(codes):
@@ -162,7 +162,7 @@ def shutdown(codes):
     :return: 1 if success, 0 if failure
     """
     code_mapping = {'logoff': 0, 'shutdown': 1, 'reboot': 2, 'force': 4, 'powerdown': 8}
-    return au.AU3_Shutdown(sum(map(code_mapping.get, codes)))
+    return _audll.AU3_Shutdown(sum(map(code_mapping.get, codes)))
 
 
 def tooltip(text, x=None, y=None):
@@ -177,7 +177,7 @@ def tooltip(text, x=None, y=None):
     :param y: The y position of the tooltip
     :return: None
     """
-    au.AU3_ToolTip(unicode(text), x if x is None else au.AU3_INTDEFAULT, y if y is None else au.AU3_INTDEFAULT)
+    _audll.AU3_ToolTip(unicode(text), x if x is None else _audll.AU3_INTDEFAULT, y if y is None else _audll.AU3_INTDEFAULT)
 
 
 def clip_get(bufsize=4096):
@@ -188,7 +188,7 @@ def clip_get(bufsize=4096):
     :return: A string containing the text on the clipboard
     """
     b = create_unicode_buffer(bufsize + 1)
-    au.AU3_ClipGet(b, bufsize + 1)
+    _audll.AU3_ClipGet(b, bufsize + 1)
     return b.value
 
 
@@ -199,7 +199,7 @@ def clip_put(value):
     :param value: The text to write to the clipboard
     :return: 1 if success, 0 if failure
     """
-    return au.AU3_ClipPut(unicode(value))
+    return _audll.AU3_ClipPut(unicode(value))
 
 
 def set_option(option, value):
@@ -209,7 +209,7 @@ def set_option(option, value):
     :param value: The value of the option setting
     :return: The value of the previous setting
     """
-    return au.AU3_AutoItSetOption(unicode(option), value)
+    return _audll.AU3_AutoItSetOption(unicode(option), value)
 
 
 def set_mouse_click_delay(delay=10):
@@ -239,7 +239,7 @@ def set_mouse_click_drag_delay(delay=250):
     return set_option('MouseClickDragDelay', delay)
 
 
-def mouse_click(button='', x=None, y=None, clicks=1, speed=10):
+def mouse_click(x=None, y=None, button='', clicks=1, speed=10):
     """Perform a mouse click operation.
 
     :param button: The button to click: "left", "right", "middle", "main", "menu", "primary", "secondary".
@@ -254,9 +254,9 @@ def mouse_click(button='', x=None, y=None, clicks=1, speed=10):
     A speed of 0 will move the mouse instantly. Default speed is 10
     :return: None
     """
-    au.AU3_MouseClick(unicode(button),
-                      x if x is None else au.AU3_INTDEFAULT, y if y is None else au.AU3_INTDEFAULT,
-                      clicks, speed)
+    _audll.AU3_MouseClick(unicode(button),
+                          x if x is not None else _audll.AU3_INTDEFAULT, y if y is not None else _audll.AU3_INTDEFAULT,
+                          clicks, speed)
 
 
 def mouse_click_drag(button, x1, y1, x2, y2, speed=10):
@@ -271,7 +271,7 @@ def mouse_click_drag(button, x1, y1, x2, y2, speed=10):
     A speed of 0 will move the mouse instantly. Default speed is 10
     :return: None
     """
-    au.AU3_MouseClickDrag(unicode(button), x1, y1, x2, y2, speed)
+    _audll.AU3_MouseClickDrag(unicode(button), x1, y1, x2, y2, speed)
 
 
 def mouse_down(button=''):
@@ -281,7 +281,7 @@ def mouse_down(button=''):
     :param button: The button to click: "left", "right", "middle", "main", "menu", "primary", "secondary"
     :return: None
     """
-    au.AU3_MouseDown(unicode(button))
+    _audll.AU3_MouseDown(unicode(button))
 
 
 def mouse_up(button=''):
@@ -291,7 +291,7 @@ def mouse_up(button=''):
     :param button: The button to click: "left", "right", "middle", "main", "menu", "primary", "secondary"
     :return: None
     """
-    au.AU3_MouseUp(unicode(button))
+    _audll.AU3_MouseUp(unicode(button))
 
 
 def mouse_move(x, y, speed=10):
@@ -305,7 +305,7 @@ def mouse_move(x, y, speed=10):
     A speed of 0 will move the mouse instantly. Default speed is 10
     :return: None
     """
-    au.AU3_MouseMove(x, y, speed)
+    _audll.AU3_MouseMove(x, y, speed)
 
 
 def mouse_wheel(direction, clicks=1):
@@ -315,7 +315,7 @@ def mouse_wheel(direction, clicks=1):
     :param clicks: The number of times to move the wheel. Default is 1
     :return: None
     """
-    au.AU3_MouseWheel(unicode(direction), clicks)
+    _audll.AU3_MouseWheel(unicode(direction), clicks)
 
 
 class _Point(Structure):
@@ -328,7 +328,7 @@ def mouse_get_pos():
     :return: A tuple of the x,y positions of the mouse cursor
     """
     ppos = pointer(_Point())
-    au.AU3_MouseGetPos(ppos)
+    _audll.AU3_MouseGetPos(ppos)
     return ppos.contents.x, ppos.contents.y
 
 
@@ -355,7 +355,7 @@ def mouse_get_cursor():
 
     :return: A cursor ID Number
     """
-    return au.AU3_MouseGetCursor()
+    return _audll.AU3_MouseGetCursor()
 
 
 # ------------------------------ Begin send keystrokes ------------------------------
@@ -465,7 +465,7 @@ def send(keys, flag=0):
     flag = 1, keys are sent raw
     :return: None
     """
-    au.AU3_Send(keys, flag)
+    _audll.AU3_Send(keys, flag)
 
 
 def send_text(text):
@@ -747,7 +747,7 @@ def pixel_checksum(left, top, right, bottom, step):
     E.g., a value of 2 will only check every other pixel. Default is 1
     :return: The checksum value of the region
     """
-    return au.AU3_PixelChecksum(pointer(_Rect(left, top, right, bottom)), step)
+    return _audll.AU3_PixelChecksum(pointer(_Rect(left, top, right, bottom)), step)
 
 
 def pixel_get_color(x, y):
@@ -757,20 +757,20 @@ def pixel_get_color(x, y):
     :param y: y coordinate of pixel
     :return: decimal value of pixel's color, or -1 if invalid coordinates
     """
-    return au.AU3_PixelGetColor(x, y)
+    return _audll.AU3_PixelGetColor(x, y)
 
 
-au.AU3_WinGetHandle.argtypes = [c_wchar_p, c_wchar_p]
-au.AU3_WinGetHandle.restype = c_void_p
-au.AU3_WinExists.argtypes = [c_wchar_p, c_wchar_p]
-au.AU3_WinExists.restype = c_bool
-au.AU3_WinActive.argtypes = [c_wchar_p, c_wchar_p]
-au.AU3_WinActive.restype = c_bool
-au.AU3_WinActivate.argtypes = [c_wchar_p, c_wchar_p]
-au.AU3_WinClose.argtypes = [c_wchar_p, c_wchar_p]
-au.AU3_WinKill.argtypes = [c_wchar_p, c_wchar_p]
-au.AU3_WinMove.argtypes = [c_wchar_p, c_wchar_p, c_int, c_int, c_int, c_int]
-au.AU3_WinGetText.argtypes = [c_wchar_p, c_wchar_p, c_wchar_p, c_int]
+_audll.AU3_WinGetHandle.argtypes = [c_wchar_p, c_wchar_p]
+_audll.AU3_WinGetHandle.restype = c_void_p
+_audll.AU3_WinExists.argtypes = [c_wchar_p, c_wchar_p]
+_audll.AU3_WinExists.restype = c_bool
+_audll.AU3_WinActive.argtypes = [c_wchar_p, c_wchar_p]
+_audll.AU3_WinActive.restype = c_bool
+_audll.AU3_WinActivate.argtypes = [c_wchar_p, c_wchar_p]
+_audll.AU3_WinClose.argtypes = [c_wchar_p, c_wchar_p]
+_audll.AU3_WinKill.argtypes = [c_wchar_p, c_wchar_p]
+_audll.AU3_WinMove.argtypes = [c_wchar_p, c_wchar_p, c_int, c_int, c_int, c_int]
+_audll.AU3_WinGetText.argtypes = [c_wchar_p, c_wchar_p, c_wchar_p, c_int]
 
 
 def win_get_handle(title, text=u''):
@@ -780,25 +780,28 @@ def win_get_handle(title, text=u''):
     :param text: the text of the window to read (optional)
     :return: the window handle value, or None if no window matches the criteria
     """
-    return au.AU3_WinGetHandle(title, text)
+    return _audll.AU3_WinGetHandle(title, text)
 
 
 def win_exists(title, text=u''):
     """Checks to see if a specified window exists, even if the window is hidden.
     """
-    return au.AU3_WinExists(title, text)
+    return _audll.AU3_WinExists(title, text)
 
 
 def win_active(title, text=u''):
     """Checks to see if a specified window exists and is currently active.
     """
-    return au.AU3_WinActive(title, text)
+    return _audll.AU3_WinActive(title, text)
 
 
 def win_activate(title, text=u''):
     """Activates (gives focus to) a window.
     """
-    au.AU3_WinActivate(title, text)
+    if not isinstance(title, basestring):
+        _audll.AU3_WinActivateByHandle(title)
+    else:
+        _audll.AU3_WinActivate(title, text)
 
 
 def win_close(title, text=u''):
@@ -808,7 +811,7 @@ def win_close(title, text=u''):
     To force a window to close, use the WinKill function.
     If multiple windows match the criteria, the window that was most recently active is closed.
     """
-    au.AU3_WinClose(title, text)
+    _audll.AU3_WinClose(title, text)
 
 
 def win_kill(title, text=u''):
@@ -819,7 +822,7 @@ def win_kill(title, text=u''):
     Although WinKill can work on both minimized and hidden windows,
     some windows (notably explorer windows) can only be terminated using WinClose.
     """
-    au.AU3_WinKill(title, text)
+    _audll.AU3_WinKill(title, text)
 
 
 def win_move(title, text=u'', x=0, y=0, width=None, height=None):
@@ -839,7 +842,7 @@ def win_move(title, text=u'', x=0, y=0, width=None, height=None):
     :param width: new width of the window (optional)
     :param height: new height of the window (optional)
     """
-    au.AU3_WinMove(title, text, x, y, width or -1, height or -1)
+    _audll.AU3_WinMove(title, text, x, y, width or -1, height or -1)
 
 
 def win_get_text(title, text=u'', bufsize=64 * 1024):
@@ -851,7 +854,7 @@ def win_get_text(title, text=u'', bufsize=64 * 1024):
     Use WinGetText("") to get the active window's text.
     """
     buf = create_unicode_buffer(bufsize)
-    au.AU3_WinGetText(title, text, buf, bufsize)
+    _audll.AU3_WinGetText(title, text, buf, bufsize)
     return buf.value
 
 
@@ -862,7 +865,7 @@ def win_get_title(title, text=u'', bufsize=64 * 1024):
     If multiple windows match the criteria, the most recently active window is used.
     """
     buf = create_unicode_buffer(bufsize)
-    au.AU3_WinGetTitle(title, text, buf, bufsize)
+    _audll.AU3_WinGetTitle(title, text, buf, bufsize)
     return buf.value
 
 
@@ -879,7 +882,10 @@ def win_get_pos(title=u'Program Manager', text=u''):
     :return:
     """
     rect = _Rect()
-    au.AU3_WinGetPos(title, text, pointer(rect))
+    if not isinstance(title, basestring):
+        _audll.AU3_WinGetPosByHandle(title, pointer(rect))
+    else:
+        _audll.AU3_WinGetPos(title, text, pointer(rect))
     return rect.left, rect.top, rect.right, rect.bottom
 
 
@@ -897,7 +903,7 @@ def win_get_client_size(title, text=u''):
     :return: tuple of width and height
     """
     rect = _Rect()
-    au.AU3_WinGetClientSize(title, text, pointer(rect))
+    _audll.AU3_WinGetClientSize(title, text, pointer(rect))
     return rect.right, rect.bottom
 
 
@@ -907,5 +913,5 @@ def win_get_caret_size():
     :return:
     """
     point = _Point()
-    au.AU3_WinGetCaretPos(pointer(point))
+    _audll.AU3_WinGetCaretPos(pointer(point))
     return point.x, point.y
